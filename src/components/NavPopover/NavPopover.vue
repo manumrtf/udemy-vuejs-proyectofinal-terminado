@@ -9,8 +9,6 @@
         <a href="/security">Nextjs</a>
         <a href="/integrations">Nextjs</a>
       </div>
-
-      <img src="/solutions.jpg" alt="" />
     </PopoverPanel>
   </Popover>
 </template>
