@@ -1,3 +1,4 @@
+
 <template>
   <main class="min-h-screen bg-gray-100">
     <header
@@ -5,6 +6,8 @@
     >
       <NavPopover />
       <p class="pl-5">Manu</p>
+      <p class="pl-5 cursor-pointer" @click="SignOut()">Sign Out</p>
+
     </header>
     <router-view></router-view>
   </main>
@@ -12,9 +15,21 @@
 
 <script setup>
 import NavPopover from "./components/NavPopover/NavPopover.vue";
+import supabase from "./db/db"
+import { useRouter } from "vue-router";
+
+const router = useRouter()
+async function SignOut() {
+  await supabase.auth.signOut()
+  router.push({
+    name:'Home'
+  })
+
+}
+
 </script>
 
-<style scoped>
+<style scope>
 .logo {
   height: 6em;
   padding: 1.5em;

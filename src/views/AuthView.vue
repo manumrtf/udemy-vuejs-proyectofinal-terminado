@@ -6,26 +6,26 @@
           <div
             class="max-w-[525px] mx-auto text-center bg-white rounded-lg relative overflow-hidden py-16 px-10 sm:px-12 md:px-[60px]">
             <div class="mb-10 md:mb-16 text-center"></div>
-            <form>
+            <form @submit.prevent="submitForm()">
               <div class="mb-6">
                 <label class="block text-left mb-3">Email</label>
-                <input type="text" placeholder="Email"
+                <input required v-model="email" type="email" placeholder="Email"
                   class="w-full rounded-md border border-[#E9EDF4] py-3 px-5 bg-[#FCFDFE] text-base text-body-color placeholder-[#ACB6BE] outline-none focus-visible:shadow-none focus:border-primary" />
               </div>
               <div class="mb-6">
                 <label class="block text-left mb-3">Password</label>
-                <input type="password" placeholder="Password"
+                <input required minlength="6" v-model="password" type="password" placeholder="Password"
                   class="w-full rounded-md border border-[#E9EDF4] py-3 px-5 bg-[#FCFDFE] text-base text-body-color placeholder-[#ACB6BE] outline-none focus-visible:shadow-none focus:border-primary" />
               </div>
               <div class="mb-10">
-                <input type="submit" value="Sign In"
+                <input :disabled="loading" type="submit" :value="authMode === 'signup' ? 'Sign Up' : 'Sign In'"
                   class="disabled:opacity-25 w-full rounded-md border border-primary py-3 px-5 bg-primary text-base text-white cursor-pointer hover:bg-opacity-90 transition bg-amber-400" />
               </div>
             </form>
             <p class="text-base mb-6 text-[#adadad]">Connect With</p>
             <ul class="flex justify-between -mx-2 mb-12">
               <li class="px-2 w-full">
-                <a href="javascript:void(0)"
+                <a @click="logInWithGoogle()" href="#"
                   class="flex h-11 items-center justify-center rounded-md bg-[#D64937] hover:bg-opacity-90">
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -37,9 +37,10 @@
             </ul>
 
             <p class="text-base text-[#adadad]">
-              Already a member?
-              <a href="javascript:void(0)" class="text-primary hover:underline">
-                Sign in
+              {{authMode === 'signup' ? 'Already a member?' : 'Do not have an account?'}}
+              <a @click="authMode === 'signup' ? authMode = 'signin' : authMode = 'signup' " href="javascript:void(0)"
+                class="text-primary hover:underline">
+                {{authMode === 'signup' ? 'Sign In' : 'Sign Up'}}
               </a>
             </p>
             <div>
@@ -106,3 +107,118 @@
     </div>
   </section>
 </template>
+
+<script setup>
+import Swal from 'sweetalert2'
+import { ref } from "vue"
+import supabase from "../db/db.js"
+import { useRouter } from "vue-router"
+const email = ref()
+const password = ref()
+const loading = ref(false)
+const authMode = ref("signup")
+const router = useRouter()
+function resetForm() {
+  email.value = ""
+  password.value = ""
+}
+
+
+async function submitForm() {
+  if (authMode.value === "signup") {
+    registerUser()
+  } else {
+    logInUser()
+  }
+}
+
+
+async function logInWithGoogle() {
+  const {error} = await supabase.auth.signInWithOAuth({
+    provider:'google'
+  })
+
+  if(error) {
+    return console.log(error)
+  }
+}
+
+async function logInUser() {
+  loading.value = true
+  const { error } = await supabase.auth.signInWithPassword({
+    email: email.value,
+    password: password.value
+  })
+  loading.value = false
+
+  if (error) {
+    console.log(error)
+    return Swal.fire({
+      title: 'Error!',
+      text: error.message,
+      icon: 'error',
+      confirmButtonText: 'OK',
+      toast: true,
+      position: 'top-right',
+      timer: 5000,
+      timerProgressBar: true
+    })
+  }
+  router.push({ name: 'Topics' })
+  resetForm()
+
+  Swal.fire({
+    title: 'Success!',
+    text: 'Signed In with success',
+    icon: 'success',
+    confirmButtonText: 'OK',
+    toast: true,
+    position: 'top-right',
+    timer: 5000,
+    timerProgressBar: true
+  })
+
+}
+
+async function registerUser() {
+  loading.value = true
+  const { error } = await supabase.auth.signUp({
+    email: email.value,
+    password: password.value,
+  })
+
+  loading.value = false
+
+  if (error) {
+    return Swal.fire({
+      title: 'Error!',
+      text: error.message,
+      icon: 'error',
+      confirmButtonText: 'OK',
+      toast: true,
+      position: 'top-right',
+      timer: 5000,
+      timerProgressBar: true
+    })
+  }
+
+  resetForm()
+
+  Swal.fire({
+    title: 'Success!',
+    text: 'Check your email to complete the signup',
+    icon: 'success',
+    confirmButtonText: 'OK',
+    toast: true,
+    position: 'top-right',
+    timer: 5000,
+    timerProgressBar: true
+  })
+
+
+
+
+}
+
+
+</script>
